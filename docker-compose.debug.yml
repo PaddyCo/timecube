@@ -1,0 +1,42 @@
+version: '3.4'
+
+services:
+  timecube:
+    image: timecube
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://postgres:postgres@db:5432/timecube?schema=public"
+      PORT: 3000
+    ports:
+      - 3000:3000
+      - 9229:9229
+    volumes:
+      - ./src:/usr/src/app/src
+    #command: ["node", "--inspect=0.0.0.0:9229", "index.js"]
+    command: npm run dev
+
+  db:
+    image: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_DB: timecube
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  adminer:
+    image: adminer
+    restart: on-failure
+    ports:
+      - 8080:8080
+
+volumes:
+  db:
+    driver: local

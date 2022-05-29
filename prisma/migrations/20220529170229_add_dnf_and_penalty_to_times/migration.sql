@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Time" ADD COLUMN     "dnf" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "penalty" BOOLEAN NOT NULL DEFAULT false;
