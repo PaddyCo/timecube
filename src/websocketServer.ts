@@ -1,9 +1,9 @@
 import { IncomingMessage, Server } from "http";
 import internal from "stream";
-import WebSocket from "ws";
+import { WebSocketServer } from "ws";
 
 export default (expressServer: Server) => {
-  const websocketServer = new WebSocket.Server({
+  const websocketServer = new WebSocketServer({
     noServer: true,
     path: "/ws",
   });

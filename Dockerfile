@@ -27,3 +27,5 @@ ENV NODE_PATH=./build
 
 RUN npx prisma generate
 RUN npm run build
+
+CMD [ "npm", "run", "start" ]

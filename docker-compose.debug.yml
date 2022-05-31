@@ -19,7 +19,6 @@ services:
       - ./src:/usr/src/app/src
     #command: ["node", "--inspect=0.0.0.0:9229", "index.js"]
     command: npm run dev
-
   db:
     image: postgres
     restart: on-failure

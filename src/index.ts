@@ -72,6 +72,7 @@ app.get(
     if (!user) {
       res.status(404);
       res.send("No user found");
+      return;
     }
     res.send(user);
   }
@@ -173,6 +174,7 @@ app.post(
     if (newTime.penalty && newTime.dnf) {
       res.status(422);
       res.send("Time can't be DNF and Penalized at the same time");
+      return;
     }
 
     // Calculate ao5 & ao12
