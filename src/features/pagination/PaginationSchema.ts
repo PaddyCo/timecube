@@ -1,11 +1,11 @@
 import { GraphQLScalarType } from "graphql";
 import { ClassType, ObjectType, Field, Int, ArgsType } from "type-graphql";
 
-export function PaginatedResponse<T>(edge: ClassType<T>) {
+export function PaginatedResponse<TItem>(TItemClass: ClassType<TItem>) {
   @ObjectType({ isAbstract: true })
-  abstract class ConnectionClass {
-    @Field((type) => [edge])
-    items: T[];
+  abstract class PaginationClass {
+    @Field((type) => [TItemClass])
+    items: TItem[];
 
     @Field()
     totalCount: number;
@@ -16,7 +16,7 @@ export function PaginatedResponse<T>(edge: ClassType<T>) {
     @Field()
     hasPreviousPage: boolean;
   }
-  return ConnectionClass;
+  return PaginationClass;
 }
 
 @ArgsType()

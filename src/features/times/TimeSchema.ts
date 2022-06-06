@@ -1,7 +1,6 @@
 import { Field, ID, Int, ObjectType } from "type-graphql";
 import PuzzleType from "../puzzleTypes/PuzzleTypeSchema";
 import User from "../users/UserSchema";
-import { PaginatedResponse } from "../pagination/PaginationSchema";
 
 @ObjectType()
 class Time {
@@ -71,8 +70,5 @@ export class NewTimePayload {
   @Field((type) => BestTimes)
   bests: BestTimes;
 }
-
-@ObjectType()
-export class TimePage extends PaginatedResponse(Time) {}
 
 export default Time;
