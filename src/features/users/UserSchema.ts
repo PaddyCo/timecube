@@ -1,14 +1,7 @@
 import { Field, ID, Int, ObjectType } from "type-graphql";
+import { PaginatedResponse } from "../pagination/PaginationSchema";
 import PuzzleType from "../puzzleTypes/PuzzleTypeSchema";
-import PaginatedResponse from "../shared/ConnectionSchema";
-import Time from "../times/TimeSchema";
-
-@ObjectType()
-export class TimesConnection extends PaginatedResponse(Time) {
-  // we can freely add more fields or overwrite the existing one's types
-  @Field((type) => [String])
-  otherInfo: string[];
-}
+import Time, { BestTimes, TimePage } from "../times/TimeSchema";
 
 @ObjectType()
 class User {
@@ -24,11 +17,16 @@ class User {
   @Field()
   email: string;
 
-  @Field((type) => [Time])
-  times: [Time];
+  @Field((type) => TimePage)
+  times: TimePage;
 
-  @Field((type) => TimesConnection)
-  timesConnection: TimesConnection;
+  @Field((type) => BestTimes)
+  bestTimes: BestTimes;
+
+  
 }
+
+@ObjectType()
+export class UserPage extends PaginatedResponse(User) {}
 
 export default User;

@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "AuthType" AS ENUM ('LOCAL');
 
+-- CreateEnum
+CREATE TYPE "BestCategory" AS ENUM ('SINGLE', 'AO5', 'AO12', 'AO100', 'MO3');
+
 -- CreateTable
 CREATE TABLE "PuzzleType" (
     "slug" TEXT NOT NULL,
@@ -48,11 +51,21 @@ CREATE TABLE "AuthMethod" (
     CONSTRAINT "AuthMethod_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "UserBest" (
+    "userId" TEXT NOT NULL,
+    "category" "BestCategory" NOT NULL,
+    "timeId" TEXT NOT NULL
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "PuzzleType_slug_key" ON "PuzzleType"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserBest_userId_timeId_category_key" ON "UserBest"("userId", "timeId", "category");
 
 -- AddForeignKey
 ALTER TABLE "Time" ADD CONSTRAINT "Time_puzzleTypeSlug_fkey" FOREIGN KEY ("puzzleTypeSlug") REFERENCES "PuzzleType"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -62,3 +75,9 @@ ALTER TABLE "Time" ADD CONSTRAINT "Time_userId_fkey" FOREIGN KEY ("userId") REFE
 
 -- AddForeignKey
 ALTER TABLE "AuthMethod" ADD CONSTRAINT "AuthMethod_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserBest" ADD CONSTRAINT "UserBest_timeId_fkey" FOREIGN KEY ("timeId") REFERENCES "Time"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserBest" ADD CONSTRAINT "UserBest_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

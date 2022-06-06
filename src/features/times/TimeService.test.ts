@@ -46,18 +46,22 @@ const buildTime = (
 beforeEach(() => {
   prismaMock.user.findUnique.mockResolvedValue(mockUser);
   prismaMock.puzzleType.findUnique.mockResolvedValue(mockPuzzleType);
+  prismaMock.$transaction.mockImplementation(async (promises) => {
+    return await Promise.all(promises);
+  });
 });
 
 describe("calculateAverage", () => {
   test("calculates ao5 correctly", async () => {
     const ms = [89550, 88500, 96780, 84060, 70940, 85510, 69280];
+    prismaMock.time.count.mockResolvedValue(ms.length);
     prismaMock.time.findMany.mockResolvedValue(ms.map((ms) => buildTime(ms)));
 
-    const times = await timeService.getAll({ take: 5, skip: 0 });
-    expect(times[0].ao5).toBe(87370);
-    expect(times[1].ao5).toBe(86023);
-    expect(times[2].ao5).toBe(80170);
-    expect(times[3].ao5).toBe(null);
+    const { items } = await timeService.getMany({ take: 5, skip: 0 });
+    expect(items[0].ao5).toBe(87370);
+    expect(items[1].ao5).toBe(86023);
+    expect(items[2].ao5).toBe(80170);
+    expect(items[3].ao5).toBe(null);
   });
 
   test("calculates ao12 correctly", async () => {
@@ -67,10 +71,10 @@ describe("calculateAverage", () => {
     ];
     prismaMock.time.findMany.mockResolvedValue(ms.map((ms) => buildTime(ms)));
 
-    const times = await timeService.getAll({ take: 3, skip: 0 });
-    expect(times[0].ao12).toBe(83222);
-    expect(times[1].ao12).toBe(83343);
-    expect(times[2].ao12).toBe(null);
+    const { items } = await timeService.getMany({ take: 3, skip: 0 });
+    expect(items[0].ao12).toBe(83222);
+    expect(items[1].ao12).toBe(83343);
+    expect(items[2].ao12).toBe(null);
   });
 
   test("calculates ao100 correctly", async () => {
@@ -91,10 +95,10 @@ describe("calculateAverage", () => {
       ao100Times.map((ms) => buildTime(ms, ms === -1))
     );
 
-    const times = await timeService.getAll({ take: 3, skip: 0 });
-    expect(times[0].ao100).toBe(66971);
-    expect(times[1].ao100).toBe(67169);
-    expect(times[2].ao100).toBe(null);
+    const { items } = await timeService.getMany({ take: 3, skip: 0 });
+    expect(items[0].ao100).toBe(66971);
+    expect(items[1].ao100).toBe(67169);
+    expect(items[2].ao100).toBe(null);
   });
 
   test("calculates DNFs correctly", async () => {
@@ -103,12 +107,12 @@ describe("calculateAverage", () => {
       ms.map((ms) => buildTime(ms === -1 ? 50000 : ms, ms === -1))
     );
 
-    const times = await timeService.getAll({ take: 5, skip: 0 });
-    expect(times[0].ao5).toBe(66397);
-    expect(times[1].ao5).toBe(60876);
-    expect(times[2].ao5).toBe(60876);
-    expect(times[3].ao5).toBe(null);
-    expect(times[4].ao5).toBe(null);
+    const { items } = await timeService.getMany({ take: 5, skip: 0 });
+    expect(items[0].ao5).toBe(66397);
+    expect(items[1].ao5).toBe(60876);
+    expect(items[2].ao5).toBe(60876);
+    expect(items[3].ao5).toBe(null);
+    expect(items[4].ao5).toBe(null);
   });
 });
 

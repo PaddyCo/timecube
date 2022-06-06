@@ -1,40 +1,67 @@
 import "reflect-metadata"; // Required by typegraphql
-import express, { Express } from "express";
-import cors from "cors";
-import { Prisma, PrismaClient, Time } from "@prisma/client";
-import websocketServer from "./websocketServer";
+import { PrismaClient } from "@prisma/client";
 import { buildSchema } from "type-graphql";
 import TimeResolver from "./features/times/TimeResolver";
-import { graphqlHTTP } from "express-graphql";
 import Container from "typedi";
-import TimeService from "./features/times/TimeService";
 import UserResolver from "./features/users/UserResolver";
+import { ApolloServer } from "apollo-server-express";
+import express from "express";
+import { createServer } from "http";
+import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
+import { WebSocketServer } from "ws";
+import { useServer } from "graphql-ws/lib/use/ws";
+import { PubSub } from "graphql-subscriptions";
 
-const app: Express = express();
-app.use(express.json());
-app.use(cors());
-const port = process.env.PORT;
+async function bootstrap() {
+  const app = express();
+  const httpServer = createServer(app);
 
-const prisma = new PrismaClient({
-  log: ["query", "info", "warn", "error"],
-});
-Container.set(PrismaClient, prisma);
+  const prisma = new PrismaClient({
+    log: ["query", "info", "warn", "error"],
+  });
+  Container.set(PrismaClient, prisma);
 
-const schema = buildSchema({
-  resolvers: [TimeResolver, UserResolver],
-  container: Container,
-}).then((schema) => {
-  app.use(
-    "/graphql",
-    graphqlHTTP({
-      schema,
-      graphiql: true,
-    })
+  const pubSub = new PubSub();
+  const schema = await buildSchema({
+    resolvers: [TimeResolver, UserResolver],
+    container: Container,
+    pubSub,
+  });
+
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: "/",
+  });
+
+  const serverCleanup = useServer({ schema }, wsServer);
+
+  const server = new ApolloServer({
+    schema,
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],
+  });
+
+  await server.start();
+  server.applyMiddleware({
+    app,
+    path: "/",
+  });
+
+  const port = process.env.PORT;
+  await new Promise<void>((resolve) => httpServer.listen({ port }, resolve));
+  console.log(
+    `🚀 Server ready at http://localhost:${port}${server.graphqlPath}`
   );
-});
+}
 
-const server = app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
-});
-
-const wsServer = websocketServer(server);
+bootstrap();

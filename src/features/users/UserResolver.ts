@@ -14,15 +14,26 @@ import {
   Root,
 } from "type-graphql";
 import { Service } from "typedi";
-import User, { TimesConnection } from "./UserSchema";
+import User, { UserPage } from "./UserSchema";
 import PuzzleTypeService from "../puzzleTypes/PuzzleTypeService";
 import UserService from "./UserService";
 import TimeService from "../times/TimeService";
-import Time from "../times/TimeSchema";
-import { CollectionArgs } from "../shared/commonSchemas";
+import { PaginationArgs } from "../pagination/PaginationSchema";
 
 @ArgsType()
-class TimesArgs extends CollectionArgs {
+class TimesArgs extends PaginationArgs {
+  @Field((type) => ID)
+  puzzleType: string;
+}
+
+@ArgsType()
+class UserArgs {
+  @Field((type) => ID)
+  userId: string;
+}
+
+@ArgsType()
+class BestTimesArgs {
   @Field((type) => ID)
   puzzleType: string;
 }
@@ -36,12 +47,22 @@ class UserResolver {
     private puzzleTypeService: PuzzleTypeService
   ) {}
 
-  @Query((returns) => [User])
-  async users(@Args() { skip, take }: CollectionArgs) {
-    return await this.userService.getAll({
+  @Query((returns) => UserPage)
+  async users(@Args() { skip, take }: PaginationArgs) {
+    return await this.userService.getMany({
       take,
       skip,
     });
+  }
+
+  @Query((returns) => User)
+  async user(@Args() { userId }: UserArgs) {
+    return await this.userService.get(userId);
+  }
+
+  @FieldResolver()
+  async bestTimes(@Root() user: User, @Args() { puzzleType }: BestTimesArgs) {
+    return await this.timeService.getBests(user.id, puzzleType);
   }
 
   @FieldResolver()
@@ -49,24 +70,12 @@ class UserResolver {
     @Root() user: User,
     @Args() { skip, take, puzzleType }: TimesArgs
   ) {
-    return await this.timeService.getAll({
+    return this.timeService.getMany({
       skip,
       take,
       userId: user.id,
       puzzleTypeSlug: puzzleType,
     });
-  }
-
-  @Query()
-  timesConnection(): TimesConnection {
-    // here is your custom business logic,
-    // depending on underlying data source and libraries
-    return {
-      items: [],
-      total: 4,
-      hasMore: true,
-      otherInfo: ["Wow"],
-    };
   }
 }
 

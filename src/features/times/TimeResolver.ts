@@ -9,20 +9,32 @@ import {
   Int,
   Mutation,
   ObjectType,
+  PubSub,
+  PubSubEngine,
   Query,
   Resolver,
   Root,
+  Subscription,
 } from "type-graphql";
 import { Service } from "typedi";
-import Time from "./TimeSchema";
+import Time, { NewTimePayload } from "./TimeSchema";
+import UserBest from "../users/UserBestsSchema";
 import PuzzleTypeService from "../puzzleTypes/PuzzleTypeService";
 import TimeService from "./TimeService";
 import UserService from "../users/UserService";
-import { CollectionArgs } from "../shared/commonSchemas";
+import { PaginationArgs } from "../pagination/PaginationSchema";
 
 @ArgsType()
-class TimesArgs extends CollectionArgs {
+class TimesArgs extends PaginationArgs {
   @Field((type) => ID, { nullable: true })
+  userId: string;
+  @Field((type) => ID, { nullable: true })
+  puzzleTypeSlug: string;
+}
+
+@ArgsType()
+export class NewTimeSubscriptionArgs {
+  @Field((type) => ID)
   userId: string;
   @Field((type) => ID, { nullable: true })
   puzzleTypeSlug: string;
@@ -42,6 +54,14 @@ export class PostTimeInput {
   penalty: number;
   @Field({ nullable: true })
   dnf: boolean;
+}
+
+@InputType()
+export class UpdateBestsInput {
+  @Field()
+  userId: string;
+  @Field()
+  puzzleTypeSlug: string;
 }
 
 @InputType()
@@ -67,7 +87,7 @@ export class BatchPostTimeInput {
 }
 
 @ObjectType()
-export class BatchPostTimeOutput {
+export class BatchOutput {
   @Field()
   count: number;
 }
@@ -83,14 +103,14 @@ class TimeResolver {
 
   @Query((returns) => [Time])
   async times(@Args() { skip, take, userId, puzzleTypeSlug }: TimesArgs) {
-    const data = await this.timeService.getAll({
+    const data = await this.timeService.getMany({
       take,
       skip,
       userId,
       puzzleTypeSlug,
     });
 
-    return data.map((t) => ({
+    return data.items.map((t) => ({
       ...t,
       user: {
         id: t.userId,
@@ -112,13 +132,42 @@ class TimeResolver {
   }
 
   @Mutation((returns) => Time)
-  async postTime(@Arg("input") input: PostTimeInput) {
-    return await this.timeService.create(input);
+  async postTime(
+    @PubSub() pubSub: PubSubEngine,
+    @Arg("input") input: PostTimeInput
+  ) {
+    console.log("PUBSUB:", pubSub);
+    const time = await this.timeService.create(input);
+    await pubSub.publish("TIMES", time);
+    return time;
   }
 
-  @Mutation((returns) => BatchPostTimeOutput)
+  @Mutation((returns) => BatchOutput)
   async batchPostTime(@Arg("input") input: BatchPostTimeInput) {
     return await this.timeService.batchCreate(input);
+  }
+
+  @Mutation((returns) => BatchOutput)
+  async updateBests(@Arg("input") input: UpdateBestsInput) {
+    return await this.timeService.updateBests(
+      input.userId,
+      input.puzzleTypeSlug
+    );
+  }
+
+  @Subscription((returns) => NewTimePayload, {
+    topics: "TIMES",
+  })
+  async newTime(
+    @Root() timePayload: Time,
+    @Args() { userId, puzzleTypeSlug }: NewTimeSubscriptionArgs
+  ) {
+    // TODO: Filter in subscription?
+    const bests = await this.timeService.getBests(userId, puzzleTypeSlug);
+    return {
+      time: timePayload,
+      bests,
+    };
   }
 }
 
