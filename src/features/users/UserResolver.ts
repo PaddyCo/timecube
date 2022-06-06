@@ -19,6 +19,7 @@ import PuzzleTypeService from "../puzzleTypes/PuzzleTypeService";
 import UserService from "./UserService";
 import TimeService from "../times/TimeService";
 import { PaginationArgs } from "../pagination/PaginationSchema";
+import { TimePage } from "../times/TimeSchema";
 
 @ArgsType()
 class TimesArgs extends PaginationArgs {
@@ -65,17 +66,21 @@ class UserResolver {
     return await this.timeService.getBests(user.id, puzzleType);
   }
 
-  @FieldResolver()
+  @FieldResolver((returns) => TimePage)
   async times(
     @Root() user: User,
     @Args() { skip, take, puzzleType }: TimesArgs
   ) {
-    return this.timeService.getMany({
+    const times = await this.timeService.getMany({
       skip,
       take,
       userId: user.id,
       puzzleTypeSlug: puzzleType,
     });
+
+    console.log(times);
+
+    return times;
   }
 }
 

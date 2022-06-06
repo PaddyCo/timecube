@@ -48,6 +48,21 @@ class Time {
 }
 
 @ObjectType()
+export class TimePage {
+  @Field((type) => [Time])
+  items: Time[];
+
+  @Field()
+  totalCount: number;
+
+  @Field()
+  hasNextPage: boolean;
+
+  @Field()
+  hasPreviousPage: boolean;
+}
+
+@ObjectType()
 export class BestTimes {
   @Field((type) => Time, { nullable: true })
   single: Time;
