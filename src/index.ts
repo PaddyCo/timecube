@@ -54,6 +54,9 @@ async function bootstrap() {
   await server.start();
   server.applyMiddleware({
     app,
+    cors: {
+      origin: "*",
+    },
     path: "/",
   });
 

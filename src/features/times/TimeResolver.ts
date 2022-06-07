@@ -157,6 +157,7 @@ class TimeResolver {
 
   @Subscription((returns) => NewTimePayload, {
     topics: "TIMES",
+    filter: ({ payload, args }) => payload.userId == args.userId,
   })
   async newTime(
     @Root() timePayload: Time,
